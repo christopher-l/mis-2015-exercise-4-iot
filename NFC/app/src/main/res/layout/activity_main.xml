@@ -5,7 +5,64 @@
     android:paddingTop="@dimen/activity_vertical_margin"
     android:paddingBottom="@dimen/activity_vertical_margin" tools:context=".MainActivity">
 
-    <TextView android:text="@string/hello_world" android:layout_width="wrap_content"
-        android:layout_height="wrap_content" />
+    <Button
+        android:id="@+id/showraw"
+        android:layout_width="fill_parent"
+        android:layout_height="wrap_content"
+        android:text="Show raw data"
+        android:onClick="showRawData"
+        />
+
+    <TextView
+        android:id="@+id/id_title"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:layout_below="@+id/showraw"
+        android:textStyle="bold"
+        android:text="ID"
+        />
+
+    <TextView
+        android:id="@+id/id"
+        android:layout_width="fill_parent"
+        android:layout_height="wrap_content"
+        android:layout_below="@+id/id_title"
+        android:layout_margin="20px"
+        />
+
+    <TextView
+        android:id="@+id/tech_title"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:layout_below="@+id/id"
+        android:textStyle="bold"
+        android:text="Supported Technologies"
+        />
+
+    <TextView
+        android:id="@+id/tech"
+        android:layout_width="fill_parent"
+        android:layout_height="wrap_content"
+        android:layout_below="@+id/tech_title"
+        android:layout_margin="20px"
+        />
+
+    <TextView
+        android:id="@+id/data_title"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:layout_below="@+id/tech"
+        android:textStyle="bold"
+        android:text="Data"
+        />
+
+    <TextView
+        android:id="@+id/textview"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:layout_below="@+id/data_title"
+        android:layout_margin="20px"
+        />
+
 
 </RelativeLayout>
