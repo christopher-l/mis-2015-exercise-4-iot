@@ -53,7 +53,7 @@
         android:layout_height="wrap_content"
         android:layout_below="@+id/tech"
         android:textStyle="bold"
-        android:text="Data"
+        android:text=""
         />
 
     <TextView

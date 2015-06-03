@@ -129,11 +129,12 @@ public class MainActivity extends Activity {
     }
 
     public void showRawData(View view) {
+        TextView data_title_view = (TextView) findViewById(R.id.data_title);
+        data_title_view.setText("Raw Data");
+        mTextView.setText("");
+
         MifareUltralight mifare = MifareUltralight.get(mTag);
         if (mifare != null) {
-            TextView data_title_view = (TextView) findViewById(R.id.data_title);
-            data_title_view.setText("Raw Data");
-            mTextView.setText("");
 
             int type = mifare.getType();
             int length = type == mifare.TYPE_ULTRALIGHT_C ? 0x2C : 0x10;
@@ -155,6 +156,7 @@ public class MainActivity extends Activity {
                 }
 
             } catch (Exception e) {
+                mTextView.setText("Could not obtain raw data. Did you remove the NFC tag?");
             } finally {
                 try {
                     mifare.close();
@@ -162,7 +164,7 @@ public class MainActivity extends Activity {
                 }
             }
         } else {
-            mTextView.setText("Cannot obtain raw data off tags that don't support Mifare Ultralight.");
+            mTextView.setText("Cannot obtain raw data from tags that don't support Mifare Ultralight.");
         }
     }
 
