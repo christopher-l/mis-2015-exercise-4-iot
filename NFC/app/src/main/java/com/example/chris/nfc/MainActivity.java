@@ -6,9 +6,13 @@ import android.nfc.NdefMessage;
 import android.nfc.NdefRecord;
 import android.nfc.NfcAdapter;
 import android.nfc.Tag;
+import android.nfc.tech.MifareUltralight;
+import android.nfc.tech.Ndef;
 import android.nfc.tech.NfcA;
 import android.os.Bundle;
+import android.os.Parcel;
 import android.os.Parcelable;
+import android.text.method.ScrollingMovementMethod;
 import android.view.Menu;
 import android.view.MenuItem;
 import android.view.View;
@@ -26,6 +30,7 @@ public class MainActivity extends Activity {
         setContentView(R.layout.activity_main);
         mTextView = (TextView) findViewById(R.id.textview);
         mTextView.setText("");
+        mTextView.setMovementMethod(new ScrollingMovementMethod());
         Intent intent = getIntent();
         mTag = (Tag) intent.getParcelableExtra(NfcAdapter.EXTRA_TAG);
         if (mTag != null) {
@@ -57,6 +62,11 @@ public class MainActivity extends Activity {
     }
 
     private void handleIntent(Intent intent) {
+        Ndef ndef = Ndef.get(mTag);
+        if (ndef != null) {
+            handleNDEF(ndef);
+        }
+        /*
         switch (intent.getAction()) {
             case NfcAdapter.ACTION_NDEF_DISCOVERED:
                 handleNDEF(intent);
@@ -66,40 +76,46 @@ public class MainActivity extends Activity {
             case NfcAdapter.ACTION_TAG_DISCOVERED:
                 break;
         }
+        */
     }
 
-    private void handleNDEF(Intent intent) {
+    private void handleNDEF(Ndef ndef) {
         TextView data_title_view = (TextView) findViewById(R.id.data_title);
         data_title_view.setText("NDEF Data");
-        NdefMessage msgs[];
-        // from https://developer.android.com/guide/topics/connectivity/nfc/nfc.html#obtain-info
-        Parcelable[] rawMsgs = intent.getParcelableArrayExtra(NfcAdapter.EXTRA_NDEF_MESSAGES);
-        if (rawMsgs != null) {
-            msgs = new NdefMessage[rawMsgs.length];
-            for (int i = 0; i < rawMsgs.length; i++) {
-                msgs[i] = (NdefMessage) rawMsgs[i];
+        try {
+
+            ndef.connect();
+            NdefMessage message = ndef.getNdefMessage();
+            mTextView.setText("");
+
+            for (int i = 0; i < message.getRecords().length; i++) {
+                NdefRecord record = message.getRecords()[i];
+                String mimeType = record.toMimeType();
+                mTextView.append("Mime type: " + mimeType + "\n\n");
+                if (mimeType.equals("text/plain")) {
+                    try {
+                        String payload = new String(record.getPayload());
+                        mTextView.append(payload);
+                    } catch (Exception e) {
+                        mTextView.append("Could not read text.");
+                    }
+                } else {
+                    mTextView.append("Content type not supported.");
+                }
+                mTextView.append("\n\n");
+                mTextView.append(record.toUri().toString());
             }
 
-            for (int i = 0; i < msgs.length; i++) {
-                for (int j = 0; j < msgs[i].getRecords().length; j++) {
-                    NdefRecord record = msgs[i].getRecords()[j];
-                    String mimeType = record.toMimeType();
-                    mTextView.append("Mime type: " + mimeType + "\n\n");
-                    if (mimeType.equals("text/plain")) {
-                        try {
-                            String payload = new String(record.getPayload());
-                            mTextView.append(payload);
-                        } catch (Exception e) {
-                            mTextView.append("Could not read text.");
-                        }
-                    } else {
-                        mTextView.append("Content type not supported.");
-                    }
-                    mTextView.append("\n\n");
-                }
+        } catch (Exception e) {
+        } finally {
+            try {
+                ndef.close();
+            } catch (Exception e) {
             }
         }
+
     }
+
 
     private void showTechAndId() {
         TextView id_view = (TextView) findViewById(R.id.id);
@@ -113,7 +129,41 @@ public class MainActivity extends Activity {
     }
 
     public void showRawData(View view) {
-        mTextView.setText(mTag.toString());
+        MifareUltralight mifare = MifareUltralight.get(mTag);
+        if (mifare != null) {
+            TextView data_title_view = (TextView) findViewById(R.id.data_title);
+            data_title_view.setText("Raw Data");
+            mTextView.setText("");
+
+            int type = mifare.getType();
+            int length = type == mifare.TYPE_ULTRALIGHT_C ? 0x2C : 0x10;
+
+            try {
+
+                mifare.connect();
+
+                for (int i = 0; i < length; i+=4) {
+                    byte[] b = mifare.readPages(i);
+                    mTextView.append(new String(b));
+                }
+
+                mTextView.append("\n\n");
+
+                for (int i = 0; i < length; i+=4) {
+                    byte[] b = mifare.readPages(i);
+                    mTextView.append(toHexString(b));
+                }
+
+            } catch (Exception e) {
+            } finally {
+                try {
+                    mifare.close();
+                } catch (Exception e) {
+                }
+            }
+        } else {
+            mTextView.setText("Cannot obtain raw data off tags that don't support Mifare Ultralight.");
+        }
     }
 
     private String toHexString(byte[] bytes) {
