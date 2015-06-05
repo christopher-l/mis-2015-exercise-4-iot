@@ -79,6 +79,21 @@ public class MainActivity extends Activity {
         */
     }
 
+    private void print_payload(byte payload[]) {
+        char status = (char) payload[0];
+        boolean isUtf8 = (status & 0x80) != 0;
+        int langLength = status & 0x7F;
+        if (langLength > 0) {
+            byte langBytes[] = new byte[langLength];
+            System.arraycopy(payload, 1, langBytes, 0, langLength);
+            mTextView.append("Language: " + new String(langBytes) + "\n");
+        }
+        int textLength = payload.length - langLength - 1;
+        byte textBytes[] = new byte[textLength];
+        System.arraycopy(payload, 1 + langLength, textBytes, 0, textLength);
+        mTextView.append("\n" + new String(textBytes));
+    }
+
     private void handleNDEF(Ndef ndef) {
         TextView data_title_view = (TextView) findViewById(R.id.data_title);
         data_title_view.setText("NDEF Data");
@@ -91,19 +106,18 @@ public class MainActivity extends Activity {
             for (int i = 0; i < message.getRecords().length; i++) {
                 NdefRecord record = message.getRecords()[i];
                 String mimeType = record.toMimeType();
-                mTextView.append("Mime type: " + mimeType + "\n\n");
-                if (mimeType.equals("text/plain")) {
+                mTextView.append("Mime type: " + mimeType + "\n");
+                if (mimeType != null) {
                     try {
-                        String payload = new String(record.getPayload());
-                        mTextView.append(payload);
+                        print_payload(record.getPayload());
                     } catch (Exception e) {
-                        mTextView.append("Could not read text.");
+                        mTextView.append("\nCould not read content.");
                     }
-                } else {
-                    mTextView.append("Content type not supported.");
+
+                    mTextView.append("\n\n");
                 }
-                mTextView.append("\n\n");
                 mTextView.append(record.toUri().toString());
+                mTextView.append("\n\n");
             }
 
         } catch (Exception e) {
@@ -170,7 +184,6 @@ public class MainActivity extends Activity {
 
     private String toHexString(byte[] bytes) {
         String string = "";
-        System.out.println(bytes.length);
         for (byte b : bytes) {
             string += String.format("%02x", b);
         }
